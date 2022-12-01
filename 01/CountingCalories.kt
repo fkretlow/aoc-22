@@ -42,7 +42,7 @@ class NGreatest<T : Comparable<T>>(capacity: Int) {
     private var head: ListNode<T>? = null
 
     fun insert(x: T): NGreatest<T> {
-        head = _insert(x, head, 0)
+        head = _insert(x, head, capacity)
         return this
     }
 
@@ -56,18 +56,18 @@ class NGreatest<T : Comparable<T>>(capacity: Int) {
         return L
     }
 
-    private fun _insert(x: T?, N: ListNode<T>?, count: Int): ListNode<T>? {
-        if (count >= capacity)  return null
-        if (x == null)          return N?.takeN(capacity - count)
+    private fun _insert(x: T?, N: ListNode<T>?, remaining: Int): ListNode<T>? {
+        if (remaining == 0)     return null
+        if (x == null)          return N?.takeN(remaining)
         if (N == null)          return ListNode<T>(x, null)
-        if (x >= N.value)       return ListNode<T>(x, _insert(null, N, count + 1))
-        else                    return ListNode<T>(N.value, _insert(x, N.next, count + 1))
+        if (x >= N.value)       return ListNode<T>(x, _insert(null, N, remaining - 1))
+        else                    return ListNode<T>(N.value, _insert(x, N.next, remaining - 1))
     }
 
     private data class ListNode<T>(val value: T, val next: ListNode<T>?) {
         fun takeN(n: Int): ListNode<T>? {
-            if (n == 0)             return null
-            else                    return ListNode<T>(value, next?.takeN(n - 1))
+            if (n == 0)         return null
+            else                return ListNode<T>(value, next?.takeN(n - 1))
         }
     }
 }
