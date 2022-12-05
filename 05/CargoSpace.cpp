@@ -39,7 +39,7 @@ private:
     void add_layer(const string& layer) {
         deque<char>::size_type i;
         string::size_type j;
-        for (i = 0, j = 1; j < layer.size(); i++, j = j + 4) {
+        for (i = 0, j = 1; j < layer.size(); ++i, j += 4) {
             char c = layer.at(j);
             if (i >= stacks.size()) {
                 stacks.push_back(deque<char>());
@@ -76,7 +76,7 @@ private:
         }
     }
 
-    string get_topmost_crates() const {
+    inline string get_topmost_crates() const {
         stringstream s;
         for (auto stack : stacks) {
             s << (!stack.empty() ? stack.back() : ' ');
