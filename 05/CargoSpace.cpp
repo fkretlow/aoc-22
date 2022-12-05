@@ -76,14 +76,10 @@ private:
         }
     }
 
-    string get_topmost_crates() {
+    string get_topmost_crates() const {
         stringstream s;
         for (auto stack : stacks) {
-            if (!stack.empty()) {
-                s << stack.back();
-            } else {
-                s << ' ';
-            }
+            s << (!stack.empty() ? stack.back() : ' ');
         }   
         return s.str();
     }
@@ -91,12 +87,15 @@ private:
 
 int main() {
     ifstream input("input.txt");
-    cout << CargoSpace().process_input(input, true) << endl;
 
-    input.clear();
-    input.seekg(0);
+    cout << "Topmost crates when moved by CrateMover 9000: "
+        << CargoSpace().process_input(input, true) << endl;
 
-    cout << CargoSpace().process_input(input, false) << endl;
+    input.clear(); input.seekg(0);
+
+    cout << "Topmost crates when moved by CrateMover 9001: "
+        << CargoSpace().process_input(input, false) << endl;
+
     return 0;
 }
 
