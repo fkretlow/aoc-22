@@ -112,6 +112,7 @@ public class Day10 {
         cpu.tick(); // don't loose the effect of a trailing add instruction
 
         System.out.println("1. Accumulated signal strength: " + meter.getSignalStrength().toString());
+        System.out.println("2. The screen of the CRT:");
         System.out.println(crt.getScreen());
     }
 }
