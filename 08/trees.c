@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#define HEIGHT 9
-#define WIDTH 9
+#define HEIGHT 99
+#define WIDTH 99
 #define INPUT_FILE_NAME "input.txt"
 
 char field[HEIGHT][WIDTH];
