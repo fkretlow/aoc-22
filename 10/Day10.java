@@ -89,7 +89,6 @@ class CRT {
         }
     }
 
-    private static final int SPRITE_WIDTH = 3;
     private static final int WIDTH = 40;
     private static final int HEIGHT = 6;
     private int spritePosition = 0;
