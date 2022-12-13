@@ -72,10 +72,22 @@ class MonkeyShenanigansEngine {
     public void playRound() {
         for (Monkey monkey : monkeys) {
             while (monkey.hasItems()) {
-                MonkeyThrow monkeyThrow = monkey.throwItem();
-                monkeys.get(monkeyThrow.recipient).catchItem(monkeyThrow.item);
+                monkey.inspectItem();
+                Long item = monkey.getItem();
+                item = preInspectionWorryIncrease(monkey.getOperation(), item);
+                if (doPostInspectionRelief) item = postInspectionRelief(item);
+                Integer recipient = monkey.getRecipient(item % monkey.getTestDivisor() == 0);
+                monkeys.get(recipient).catchItem(item % productOfDivisors);
             }
         }
+    }
+
+    private Long preInspectionWorryIncrease(Expression operation, Long worryLevel) {
+        return operation.evaluate(Map.of("old", worryLevel));
+    }
+
+    private Long postInspectionRelief(Long worryLevel) {
+        return worryLevel / POST_INSPECTION_RELIEF_FACTOR;
     }
 
     public Long getMonkeyBusiness() {
@@ -87,39 +99,44 @@ class MonkeyShenanigansEngine {
             .reduce(1L, (x,y) -> x * y);
     }
 
-    public void addMonkey(String src) { monkeys.add(Monkey.fromString(src)); }
+    public void addMonkey(String src) {
+        Monkey monkey = Monkey.fromString(src);
+        monkeys.add(monkey);
+        productOfDivisors *= monkey.getTestDivisor();
+    }
+
     public void showMonkeys() { monkeys.forEach(m -> System.out.println(m.toString())); }
+    public void setDoPostInspectionRelief(Boolean b) { doPostInspectionRelief = b; }
 
     private List<Monkey> monkeys = new ArrayList<>();
+    private Long productOfDivisors = 1L;
+    private Boolean doPostInspectionRelief = true;
+    private static Long POST_INSPECTION_RELIEF_FACTOR = 3L;
 
     public static class Monkey {
-        public Monkey(Queue<Long> items, Expression operation, Predicate<Long> test, Integer[] recipients) {
+        public Monkey(Queue<Long> items, Expression operation, Long testDivisor, Integer[] recipients) {
             this.items = items;
             this.operation = operation;
-            this.test = test;
+            this.testDivisor = testDivisor;
             this.recipients = recipients;
         }
 
-        public MonkeyThrow throwItem() {
-            if (items.isEmpty()) return null;
-            ++itemsInspected;
-            Long itemToThrow = postInspectionRelief(preInspectionWorryIncrease(items.remove()));
-            return new MonkeyThrow(itemToThrow, determineRecipient(itemToThrow));
-        }
-
         public Boolean hasItems() { return !items.isEmpty(); }
+        public Long getItem() { return items.poll(); }
         public void catchItem(Long item) { items.add(item); }
+
+        public void inspectItem() { ++itemsInspected; }
         public Long getItemsInspected() { return itemsInspected; }
-        private Long preInspectionWorryIncrease(Long worryLevel) { return operation.evaluate(Map.of("old", worryLevel)); }
-        private Long postInspectionRelief(Long worryLevel) { return worryLevel / POST_INSPECTION_RELIEF_FACTOR; }
-        private Integer determineRecipient(Long worryLevel) { return test.test(worryLevel) ? recipients[0] : recipients[1]; }
+
+        public Expression getOperation() { return operation; }
+        public Integer getRecipient(Boolean testResult) { return testResult ? recipients[0] : recipients[1]; }
+        public Long getTestDivisor() { return testDivisor; }
 
         private final Queue<Long> items;
         private final Expression operation;
-        private final Predicate<Long> test;
+        private final Long testDivisor;
         private final Integer[] recipients;
         private Long itemsInspected = 0L;
-        public static Long POST_INSPECTION_RELIEF_FACTOR = 3L;
 
         public String toString() {
             return "Monkey("
@@ -132,9 +149,9 @@ class MonkeyShenanigansEngine {
             var lines = src.split("\n");
             var items = parseItems(lines[1]);
             var operation = parseOperation(lines[2]);
-            var test = parseTest(lines[3]);
+            var testDivisor = parseTestDivisor(lines[3]);
             var recipients = parseRecipients(lines[4], lines[5]);
-            return new Monkey(items, operation, test, recipients);
+            return new Monkey(items, operation, testDivisor, recipients);
         }
         
         private static Queue<Long> parseItems(String line) {
@@ -158,12 +175,11 @@ class MonkeyShenanigansEngine {
             return new Operation(op, lhexpr, rhexpr);
         }
 
-        private static Predicate<Long> parseTest(String line) {
+        private static Long parseTestDivisor(String line) {
             Pattern p = Pattern.compile("  Test: divisible by (?<divisor>\\d+)");
             Matcher m = p.matcher(line);
             if (!m.matches()) throw new IllegalArgumentException(String.format("cannot parse test: '%s'", line));
-            Long divisor = Long.parseLong(m.group("divisor"));
-            return x -> x % divisor == 0;
+            return Long.parseLong(m.group("divisor"));
         }
 
         private static Integer[] parseRecipients(String line1, String line2) {
@@ -177,8 +193,6 @@ class MonkeyShenanigansEngine {
             return new Integer[] { r1, r2 };
         }
     }
-
-    private static record MonkeyThrow(Long item, Integer recipient) {}
 }
 
 
@@ -186,6 +200,7 @@ public class Day11 {
     public static void main(String[] argv) throws IOException {
         String input = new String(Files.readAllBytes(Paths.get("input.txt")));
         part1(input);
+        part2(input);
     }
 
     private static void part1(String input) {
@@ -193,5 +208,13 @@ public class Day11 {
         for (String src : input.split("\n\n")) { engine.addMonkey(src); }
         for (int remaining = 20; remaining > 0; --remaining) engine.playRound();
         System.out.println(String.format("1. Monkey business: %d", engine.getMonkeyBusiness()));
+    }
+
+    private static void part2(String input) {
+        MonkeyShenanigansEngine engine = new MonkeyShenanigansEngine();
+        engine.setDoPostInspectionRelief(false);
+        for (String src : input.split("\n\n")) { engine.addMonkey(src); }
+        for (int remaining = 10000; remaining > 0; --remaining) engine.playRound();
+        System.out.println(String.format("2. Monkey business: %d", engine.getMonkeyBusiness()));
     }
 }
